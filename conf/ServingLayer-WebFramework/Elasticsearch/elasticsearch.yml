@@ -1,7 +1,7 @@
 #AWS Information
 #https://sites.google.com/a/insightdatascience.com/dataengineering/devsetups/elasticsearch-intro
-cloud.aws.access_key: AKIAJ6FNPEIFNEIRBDCQ
-cloud.aws.secret_key: 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
+cloud.aws.access_key: 
+cloud.aws.secret_key: 
 cloud.aws.region: us-west-2
 
 discovery.type: ec2
