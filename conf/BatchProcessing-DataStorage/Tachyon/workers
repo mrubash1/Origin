@@ -1,0 +1,4 @@
+# A Tachyon Worker will be started on each of the machines listed below.
+ip-172-31-45-19
+ip-172-31-45-17
+ip-172-31-45-20
