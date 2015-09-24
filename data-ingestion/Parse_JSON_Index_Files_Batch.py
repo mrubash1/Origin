@@ -16,32 +16,34 @@ def json_get_key_value(json_string,key):
     json_object = json.loads(json_string)
     json_parsed = json_object[key]
     return json_parsed
+    print 'KEY VALUE OBTAINED'
+    print
 
-#Function to make a WAT location file fram a WARC location file
-def json_make_WAT_from_WARC(json_string):
-    json_string = json_string.replace('/warc/','/wat/')
-    json_string = json_string.replace('warc.gz','warc.wat.gz')
-    return json_string
 
-#Function to make a WET location file fram a WARC location file
-def json_make_WET_from_WARC(json_string):
-    json_string = json_string.replace('/warc/','/wet/')
-    json_string = json_string.replace('warc.gz','warc.wet.gz')
-    return json_string
     
 #Write parsed json value from file, specified by filename
 def batch_WARC_file_destination(filename,rootdir):
     processed_directory = rootdir + '_processed'
     with open(processed_directory+'/'+filename, 'w+') as file: #file to write
         with open(rootdir+'/'+filename, 'r') as f: #file to read
-            try:
+            #ry:
                 json_files = f.readlines()
                 for line in json_files:
                     #Get WARC file
+                    #print 'LINE: ', line
+                    line = str(line)
+                    ##EDIT LATER##
+                    # THIS IN HERE TO CORRECT AN ERROR IN THE CDX CLIENT 150923
+                    start_index=(line.index('{'))
+                    line = line[start_index:] #Start read at url only
+                    #print 'NEW LINE: ', line
+                    ##EDIT LATER##
                     json_parsed=json_get_key_value(line,key)
                     file.write(str(json_parsed)+'\n')
-            except:
-                pass
+                    #print 'FILE WRITTEN WITH ITERATOR'
+                    #print
+            #except:
+                #pass
 
 def Iterator_for_WET_and_WAT_files(filename, rootdir):
     processed_directory = rootdir + '_processed'
