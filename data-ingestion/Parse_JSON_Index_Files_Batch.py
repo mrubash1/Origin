@@ -16,8 +16,8 @@ def json_get_key_value(json_string,key):
     json_object = json.loads(json_string)
     json_parsed = json_object[key]
     return json_parsed
-    print 'KEY VALUE OBTAINED'
-    print
+    #print 'KEY VALUE OBTAINED'
+    #print
 
 
     
