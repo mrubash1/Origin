@@ -192,28 +192,48 @@ def Iterator_for_opening_files(rootdir, input_directory, output_directory):
     file_name = 'domain-wikipedia.org-' + var #updated to open a specific file using the global input var
     #print 'THIS IS THE FILE NAME: ', file_name
     with open(input_directory+'/'+file_name) as f: #file to read
-        #try:
+        #CREATE LOG FILE FOR STORING WHICH DID NOT OPEN
+        log_directory = output_directory + '/' + file_name
+        #print 'SAVING DIRECTORY: ', saving_directory
+        file = open(log_directory, "w+") 
+        file.close()
+        try:
             filename_lines = f.readlines()
-            print 'THESE ARE THE LINES'
+            #print 'THESE ARE THE LINES'
             for line in filename_lines:
-                base_name = str(line).replace('\n', '') #replace line space
-                #convert .warc to .wet and .wat, with proper string replacements
-                filename_WET=json_make_WET_from_WARC(base_name)
-                filename_WAT=json_make_WAT_from_WARC(base_name)
-                #print 'LOOK AT THIS: ', filename_WET
-                #Uncompress the WET and WAT files with the proper S3 key
-                WARC_WET=create_WARC_file_from_Common_Crawl(filename_WET,pds)
-                WARC_WAT=create_WARC_file_from_Common_Crawl(filename_WAT,pds)
-                #get the plaintext and link information
-                get_text_from_WET_file(filename_WET, WARC_WET,descriptor,output_directory)
-                process_WAT_file(filename_WAT,WARC_WAT,descriptor,output_directory)
-                #print 'This file is complete: ', file
-                total_records_counter=total_records_counter+1
-                #print 'Total set of files processed: ', total_records_counter
-                #print
-        #except:
-        #    print 'THERE WAS AN EXCEPTION'
-        #    pass
+                try:
+                    base_name = str(line).replace('\n', '') #replace line space
+                    #convert .warc to .wet and .wat, with proper string replacements
+                    filename_WET=json_make_WET_from_WARC(base_name)
+                    filename_WAT=json_make_WAT_from_WARC(base_name)
+                    #print 'LOOK AT THIS: ', filename_WET
+                    #Uncompress the WET and WAT files with the proper S3 key
+                    WARC_WET=create_WARC_file_from_Common_Crawl(filename_WET,pds)
+                    WARC_WAT=create_WARC_file_from_Common_Crawl(filename_WAT,pds)
+                    #get the plaintext and link information
+                    get_text_from_WET_file(filename_WET, WARC_WET,descriptor,output_directory)
+                    process_WAT_file(filename_WAT,WARC_WAT,descriptor,output_directory)
+                    #print 'This file is complete: ', file
+                    total_records_counter=total_records_counter+1
+                    #print 'Total set of files processed: ', total_records_counter
+                    #print
+                except:
+                    #just pass if an individual line could not be opened from S3
+                    pass
+        except:
+            saving_directory = output_directory + '/' + file_name
+            #print 'SAVING DIRECTORY: ', saving_directory
+            file = open(log_directory, "w") #instantiate file first to avoid r+ not making file
+            file.write(file_name + ' NOTuploaded' + '\n')
+            file.close()
+            print 'THERE WAS AN EXCEPTION IN OPENING AWS FILE: ', 
+            pass
+            
+        #record what happened in log
+        file = open(log_directory, "w")
+        file.write(file_name + ' uploaded' + '\n')
+        file.close()
+
 
 def main():
     #RUN EVERYTHING
@@ -259,5 +279,6 @@ if __name__ == "__main__":
     
     #now run everything
     main()
+
 
 
