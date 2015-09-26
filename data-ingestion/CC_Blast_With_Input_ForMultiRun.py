@@ -34,7 +34,7 @@ def get_text_from_WET_file(WET_file_name, WARC, descriptor, output_directory):
         plaintext = re.sub(r'<.*?>', '', text) #remove random characters to avoid JSON errors
         plaintext=plaintext.decode('unicode_escape').encode('ascii','ignore') #remove unicode characters to avoid JSON errors
       except:
-        print 'CANNOT FORMAT CORRECTLY'
+        #print 'CANNOT FORMAT CORRECTLY'
         pass
       #plaintext=plaintext.replace(('\n', '')) #remove all new lines to avoid JSON errors
       #print 'PLAINTEXT: ', plaintext
@@ -78,7 +78,7 @@ def process_WAT_file(WAT_file_name, WARC, descriptor,output_directory):
             if type(WAT_json_data) == str:
                 file.write(WAT_json_data + '\n') # WRITE OUT TO FILE
                 #print 'WAT file processed: ', file_name, ' - with URL: ', url
-                print
+                #print
     if download_to_s3 == True:
         run_the_s3_download(file) #RUN THE S3 DOWNLOAD FUNCTION!
     #print 'Uploaded WAT information to s3: '
@@ -193,7 +193,7 @@ def Iterator_for_opening_files(rootdir, input_directory, output_directory):
     #print 'THIS IS THE FILE NAME: ', file_name
     with open(input_directory+'/'+file_name) as f: #file to read
         #CREATE LOG FILE FOR STORING WHICH DID NOT OPEN
-        log_directory = output_directory + '/' + file_name
+        log_directory = output_directory + '/' + file_name + '_log'
         #print 'SAVING DIRECTORY: ', saving_directory
         file = open(log_directory, "w+") 
         file.close()
@@ -228,7 +228,7 @@ def Iterator_for_opening_files(rootdir, input_directory, output_directory):
             file.close()
             print 'THERE WAS AN EXCEPTION IN OPENING AWS FILE: ', 
             pass
-            
+
         #record what happened in log
         file = open(log_directory, "w")
         file.write(file_name + ' uploaded' + '\n')
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     #Insert file names WET: plain text; WAT: hyperlinks
     rootdir = 'Wikipedia_CDX_index_results_January_2015'
     input_directory = rootdir + '_processed'
-    output_directory = rootdir + '_WHOLE_DATA_SET_s3'
+    output_directory = rootdir + '_WHOLE_DATA_SET_s3_12nodeDownload'
 
     #Connect to Personal S3 for downloading the data
     aws_access_key = os.getenv('AWS_ACCESS_KEY_ID', 'default')
