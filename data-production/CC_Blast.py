@@ -70,7 +70,7 @@ def get_text_from_WET_file(WET_file_name, WARC, descriptor, output_directory):
   #process plaintext in WET file
   for num, record in enumerate(WARC):
     url = record.header.get('warc-target-uri', None)
-    if descriptor in str(url):
+    if filename_identifier in str(url):
       text = record.payload.read()
       try: #see if the plaintext can be formatted
         plaintext = re.sub(r'<.*?>', '', text) #remove random characters to avoid JSON errors
@@ -111,6 +111,8 @@ def process_WAT_file(WAT_file_name, WARC, descriptor,output_directory):
     #Process WAT file
     for num, record in enumerate(WARC): #this is where there are problems
         url = record.header.get('warc-target-uri', None)
+        print 'THIS IS THE URL, see if it is right: ', url
+        #
         if descriptor in str(url):
             plaintext = record.payload.read()
             WAT_json_data=get_links_from_Messy_WAT_file_plaintext(url, plaintext) # run function
@@ -133,7 +135,7 @@ def get_links_from_Messy_WAT_file_plaintext(url, plaintext):
     plaintext_dict = ast.literal_eval((plaintext.replace('true','True')).replace('false','False')) #update later to one faster pass
     #print plaintext_dict
     #Variables for creating end json file
-    url_base = 'http://' + filename_base #filename_base is a global variable 
+    url_base = 'http://' + url #filename_base is a global variable 
     #url_base='http://en.wikipedia.org' #original version
     #analyze_wikipedia_only= True #removed this section from the code as an option
     list_of_json_files = []
@@ -230,7 +232,7 @@ def run_the_s3_download(file):
         #print 'The upload failed...'
 
 #Run through all files in rootdir folder to grab information from S3
-def Iterator_for_opening_files(rootdir, input_directory, output_directory, file_name_root):
+def Iterator_for_opening_files(rootdir, input_directory, output_directory, file_name_root, filename_identifier, lookup_string):
     total_records_counter=0
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
@@ -246,25 +248,27 @@ def Iterator_for_opening_files(rootdir, input_directory, output_directory, file_
             filename_lines = f.readlines()
             #print 'THESE ARE THE LINES'
             for line in filename_lines:
-                try:
-                    base_name = str(line).replace('\n', '') #replace line space
-                    #convert .warc to .wet and .wat, with proper string replacements
-                    filename_WET=json_make_WET_from_WARC(base_name)
-                    filename_WAT=json_make_WAT_from_WARC(base_name)
-                    #print 'LOOK AT THIS: ', filename_WET
-                    #Uncompress the WET and WAT files with the proper S3 key
-                    WARC_WET=create_WARC_file_from_Common_Crawl(filename_WET,pds)
-                    WARC_WAT=create_WARC_file_from_Common_Crawl(filename_WAT,pds)
-                    #get the plaintext and link information
-                    get_text_from_WET_file(filename_WET, WARC_WET,descriptor,output_directory)
-                    process_WAT_file(filename_WAT,WARC_WAT,descriptor,output_directory)
-                    #print 'This file is complete: ', file
-                    total_records_counter=total_records_counter+1
-                    #print 'Total set of files processed: ', total_records_counter
-                    #print
-                except:
-                    #just pass if an individual line could not be opened from S3
-                    pass
+                #make sure that the PMC tag is in the line, as that is what we are interested in
+                if lookup_string in str(line):
+                    try:
+                        base_name = str(line).replace('\n', '') #replace line space
+                        #convert .warc to .wet and .wat, with proper string replacements
+                        filename_WET=json_make_WET_from_WARC(base_name)
+                        filename_WAT=json_make_WAT_from_WARC(base_name)
+                        #print 'LOOK AT THIS: ', filename_WET
+                        #Uncompress the WET and WAT files with the proper S3 key
+                        WARC_WET=create_WARC_file_from_Common_Crawl(filename_WET,pds)
+                        WARC_WAT=create_WARC_file_from_Common_Crawl(filename_WAT,pds)
+                        #get the plaintext and link information
+                        get_text_from_WET_file(filename_WET, WARC_WET,descriptor,output_directory)
+                        process_WAT_file(filename_WAT,WARC_WAT,descriptor,output_directory, filename_identifier)
+                        #print 'This file is complete: ', file
+                        total_records_counter=total_records_counter+1
+                        #print 'Total set of files processed: ', total_records_counter
+                        #print
+                    except:
+                        #just pass if an individual line could not be opened from S3
+                        pass
         except:
             saving_directory = output_directory + '/' + file_name
             #print 'SAVING DIRECTORY: ', saving_directory
@@ -281,10 +285,10 @@ def Iterator_for_opening_files(rootdir, input_directory, output_directory, file_
 
 def main():
     #run iterator for json parsing information from CDX index client 
-    Iterator_for_WET_and_WAT_files(filename, rootdir)
-    print 'done parsing'
+    #Iterator_for_WET_and_WAT_files(filename, rootdir)
+    #print 'done parsing'
     #run iterator for uploading wet (text) and wat (hyperlinks) of url to personal s3
-    Iterator_for_opening_files(rootdir, input_directory, output_directory,file_name_root) #Use the input here to launch
+    Iterator_for_opening_files(rootdir, input_directory, output_directory,file_name_root, filename_identifier, lookup_string) #Use the input here to launch
     print 'end'
 
 if __name__ == "__main__":
@@ -298,18 +302,19 @@ if __name__ == "__main__":
 
     #FOR JSON PARSER
     key = "filename" #filename=WARC directory
-    filename_base='ncbi.nlm.nih.gov-pmc-articles' #also used later for creating real links
-    filename= 'prefix-.' + filename_base + '-' #this is also for when users can add '0' or '07' or etc when calling the script
+    filename_identifier='domain-ncbi.nlm.nih.gov-' #also used later for creating real links
+    filename= filename_identifier #this is also for when users can add '0' or '07' or etc when calling the script
     #filename = 'prefix-.ncbi.nlm.nih.gov-pmc-articles-'
-    rootdir='PubMed_PMC'
+    rootdir='PubMed'
 
     #Connect to amazon S3 containing commoncrawl, no authenitcation necessary
     conn = boto.connect_s3(anon=True, debug=2)
     pds = conn.get_bucket('aws-publicdatasets')
 
     #file name information for uploading to S3
-    file_name_root=filename
+    file_name_root=filename  # to open the specific file
     output_folder_name='PubMed_for_S3'
+
 
     #Insert file names WET: plain text; WAT: hyperlinks
     #rootdir = 'Wikipedia_CDX_index_results_January_2015'
@@ -320,9 +325,10 @@ if __name__ == "__main__":
     aws_access_key = os.getenv('AWS_ACCESS_KEY_ID', 'default')
     aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY', 'default')
 
-    #Descriptor: limit the urls downloaded to this inclusion filter
-    descriptor = "ncbi"
-
+    #Descriptor: limit the urls downloaded to this inclusion filter, 
+    #lookup string does similiar function, replace later
+    descriptor = 'pmc'
+    lookup_string= 'common'
 
     #Determines whether to download to S3 or just run files to see output
     download_to_s3 = True
