@@ -1,0 +1,146 @@
+﻿body {
+    overflow-x: hidden;
+    font-family: 'Open Sans',sans-serif;
+    font-size: 16px;
+}
+
+.id-submit {
+    background: #fff;
+    color:#333;
+    transition: all .2s ease-in-out;
+}
+
+.id-submit:hover {
+    background:#B71C1C;
+    color: #fff;
+}
+
+a {
+    transition: all .2s ease-in-out;
+}
+
+.no-border-top{
+    border-top: 0px;
+}
+
+th {
+    text-align: center;
+}
+
+.navbar-default .navbar-nav > .active > a {
+  border-bottom: 2px solid #fff;
+}
+
+.navbar-default {
+    border-color: #054760;
+    background-color: #054760;
+}
+
+
+    .navbar-default .navbar-brand {
+        
+        font-family: 'Open Sans', sans-serif;
+        font-size: 24px;
+        font-weight: 300;
+        color: #333;
+        /*line-height: 50px;*/
+    }
+
+
+        .navbar-default .navbar-brand:hover,
+        .navbar-default .navbar-brand:focus,
+        .navbar-default .navbar-brand:active,
+        .navbar-default .navbar-brand.active {
+            color: #ddd;
+        }
+
+    .navbar-default .navbar-collapse {
+        border-color: #054760;
+    }
+
+        .navbar-default .navbar-toggle .icon-bar {
+            background-color: #fff;
+        }
+
+        .navbar-default .navbar-toggle:hover,
+        .navbar-default .navbar-toggle:focus {
+            background-color: #fb8c00;
+        }
+
+    .navbar-default .nav li a {
+        text-transform: uppercase;
+        font-family: 'Open Sans', sans-serif;
+        font-weight: 400;
+        letter-spacing: 1px;
+        margin-top: 5px;
+        
+        color: #333;
+    }
+
+        .navbar-default .nav li a:hover,
+        .navbar-default .nav li a:focus {
+            outline: 0;
+            color: #ce3a3a;
+        }
+
+    .navbar-default .navbar-nav > .active > a {
+        /*border-radius: 4px;
+        color: #fff;*/
+        background-color: #fff;
+    }
+
+        .navbar-default .navbar-nav > .active > a:hover,
+        .navbar-default .navbar-nav > .active > a:focus {
+            color: #ce3a3a;
+            background-color: #fff;
+        }
+
+footer {
+    padding: 50px 0;
+    text-align: center;
+}
+
+    footer span.copyright {
+        text-transform: uppercase;
+        text-transform: none;
+        font-family: 'Open Sans', sans-serif;
+        line-height: 40px;
+    }
+
+
+.footerme {
+    /*background: #424242;*/
+    background: #292f33;
+    color: #f7f7f7;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 18px;
+}
+
+.social-buttons{
+    font-size:48px;
+    text-align: center;
+}
+
+.gmail{
+    color:#fff;
+}
+
+.gmail:hover{
+    color:#B71C1C;
+}
+
+.linkedin{
+    color:#fff;
+}
+
+.linkedin:hover{
+    color:#1b5480;
+}
+
+.github{
+    color:#fff;
+}
+
+.github:hover{
+    color:#677c89;
+}
