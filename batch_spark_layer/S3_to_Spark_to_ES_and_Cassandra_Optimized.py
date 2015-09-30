@@ -212,10 +212,17 @@ RDD_url_ranks_links.take(20)
 
 # <codecell>
 
+repartition_number
 #Create RDD with multiple columns and filtered to not have Null positions
 RDD_url_ranks_links_partioned= RDD_url_ranks_links.partitionBy(repartition_number)
+#Make sure that the RDD has both ranks and links
 RDD_JSON_FILTERED = RDD_url_ranks_links_partioned.filter(lambda x: x[1][0] != None and x[1][1] != None)
-RDD_JSON=RDD_JSON_FILTERED.map(lambda x: {"url":x[0], "ranks":x[1][0], "links":x[1][1]}).persist(StorageLevel.MEMORY_AND_DISK_SER) 
+#RDD_JSON=RDD_JSON_FILTERED.map(lambda x: {"url":x[0], "ranks":x[1][0], "links":x[1][1]}).persist(StorageLevel.MEMORY_AND_DISK_SER) 
+
+#create Json form of RDD, and add an additional url_ID column for future sorting
+#RDD_JSON=RDD_JSON_FILTERED.map(lambda x: {"url":x[0], "ranks":x[1][0], "links":x[1][1]}).persist(StorageLevel.MEMORY_AND_DISK_SER) 
+#where user_ID is the total amount of links used as an ad hoc partition key to increase speed, and reduce hot to warm spots
+RDD_JSON=RDD_JSON_FILTERED.map(lambda x: { "user_ID": len(x[1][1]), "ranks":x[1][0], "url":x[0],"links":x[1][1], }).persist(StorageLevel.MEMORY_AND_DISK_SER) 
 RDD_JSON.take(10)
 
 #3.5 seconds
@@ -241,21 +248,45 @@ def AddToCassandra_allcountsbatch_bypartition(d_iter): #filter_missing_values=Tr
     #CASSANDRA_KEYSPACE = "wikipedia_jan_2015"
     CASSANDRA_KEYSPACE = "test"
     connection.setup(['52.89.66.139','52.89.34.7','52.89.116.45','52.89.78.4', '52.89.27.115','52.89.133.147','52.89.1.48'], CASSANDRA_KEYSPACE)
-    class url_ranks_links_4(Model):
-        url = columns.Text(primary_key=True)
+    class url_ranks_links_15(Model):
+        #primary key is user_ID which is dictated by the number of links
+        user_ID=columns.Float(primary_key=True)
         ranks = columns.Float(primary_key=True)#this will be stored as a double # this is a primary key to sort on later
+        url = columns.Text()
         links = columns.List(columns.Text)#this will be stored as a double
+        
+        
         def __repr__(self):
             return '%s %s' % (self.url, self.ranks)
-    sync_table(url_ranks_links_4)
+    sync_table(url_ranks_links_15)
     for d in d_iter:
-        url_ranks_links_4.create(**d)
+        url_ranks_links_15.create(**d)
 
        
 # Create table if it does not exist. Need to do this before submitting to Spark to avoid collisions
-AddToCassandra_allcountsbatch_bypartition([])
+#AddToCassandra_allcountsbatch_bypartition([])
 RDD_JSON.foreachPartition(AddToCassandra_allcountsbatch_bypartition)
 print ('ranks table in cassandra transfered')
 
 #46 seconds
+
+# <codecell>
+
+#Calls in Cassandra cqlsh in terminal:
+#CREATE TABLE url_ranks_links_15 ("user_ID" double, ranks double, url text,  links list<text>, PRIMARY KEY (("user_ID"), ranks), ) WITH CLUSTERING ORDER BY (ranks DESC);
+#SELECT DISTINCT "user_ID" FROM url_ranks_links_15
+#cqlsh:test> SELECT ranks FROM url_ranks_links_15 where "user_ID"=172 ORDER BY ranks DESC  ;
+
+# <codecell>
+
+
+# <codecell>
+
+
+# <codecell>
+
+
+# <codecell>
+
+
 
