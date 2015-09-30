@@ -203,32 +203,36 @@ print ('done')
 
 # <codecell>
 
-#convert RDD plaintext and links to JSON to import to cassandra
-#And repartition to prevent cassandra from crashing
-#repartition_number=30 #SET ABOVE
-RDD_ranks_JSON = ranks.partitionBy(repartition_number).map(lambda x: {"url":x[0], "ranks":x[1]}).cache()
-#RDD_ranks_JSON = ranks.map(lambda x: {"url":x[0], "ranks":x[1]}).cache() #Cached to speed up upload to database
-RDD_ranks_JSON.take(3)
-
-#takes 1.3 seconds
+#Create JSON files for import into Cassandra
+RDD_url_ranks_links=ranks.leftOuterJoin(RDD_links)
+RDD_url_ranks_links.take(20)
 
 # <codecell>
 
-#convert RDD plaintext and links to JSON to import to cassandra
-RDD_links_JSON = RDD_links.partitionBy(repartition_number).map(lambda x: {"url":x[0], "links":x[1]}).persist(StorageLevel.MEMORY_AND_DISK_SER)
-#RDD_links_JSON = RDD_links.map(lambda x: {"url":x[0], "links":x[1]}).cache() #Cached to speed up upload to database
-RDD_links_JSON.take(1)
-
-#takes 0.38 seconds
 
 # <codecell>
 
+#Create RDD with multiple columns and filtered to not have Null positions
+RDD_url_ranks_links_partioned= RDD_url_ranks_links.partitionBy(repartition_number)
+RDD_JSON_FILTERED = RDD_url_ranks_links_partioned.filter(lambda x: x[1][0] != None and x[1][1] != None)
+RDD_JSON=RDD_JSON_FILTERED.map(lambda x: {"url":x[0], "ranks":x[1][0], "links":x[1][1]}).persist(StorageLevel.MEMORY_AND_DISK_SER) 
+RDD_JSON.take(10)
+
+#3.5 seconds
+
+#Without filtering:
+#RDD_JSON=RDD_url_ranks_links_partioned.map(lambda x: {"url":x[0], "ranks":x[1][0], "links":x[1][1]}).persist(StorageLevel.MEMORY_AND_DISK_SER)
+#RDD_JSON_FILTERED.take(10)
+
+# <codecell>
+
+
+# <codecell>
 
 # importing modules from cqlengine to write to cassandra table
-
 #Cannot currently overwrite the url_ranks
 
-def AddToCassandra_allcountsbatch_bypartition(d_iter):
+def AddToCassandra_allcountsbatch_bypartition(d_iter): #filter_missing_values=True for RDDs
     #from cassandra.cluster import Cluster
     from cqlengine import columns
     from cqlengine.models import Model
@@ -237,62 +241,21 @@ def AddToCassandra_allcountsbatch_bypartition(d_iter):
     #CASSANDRA_KEYSPACE = "wikipedia_jan_2015"
     CASSANDRA_KEYSPACE = "test"
     connection.setup(['52.89.66.139','52.89.34.7','52.89.116.45','52.89.78.4', '52.89.27.115','52.89.133.147','52.89.1.48'], CASSANDRA_KEYSPACE)
-    class url_ranks_6(Model):
+    class url_ranks_links_4(Model):
         url = columns.Text(primary_key=True)
-        ranks = columns.Float()#this will be stored as a double
+        ranks = columns.Float(primary_key=True)#this will be stored as a double # this is a primary key to sort on later
+        links = columns.List(columns.Text)#this will be stored as a double
         def __repr__(self):
             return '%s %s' % (self.url, self.ranks)
-    sync_table(url_ranks_6)
+    sync_table(url_ranks_links_4)
     for d in d_iter:
-        url_ranks_6.create(**d)
+        url_ranks_links_4.create(**d)
 
        
 # Create table if it does not exist. Need to do this before submitting to Spark to avoid collisions
 AddToCassandra_allcountsbatch_bypartition([])
-
-# <codecell>
-
-#add ranks to cassandra
-RDD_ranks_JSON.foreachPartition(AddToCassandra_allcountsbatch_bypartition)
+RDD_JSON.foreachPartition(AddToCassandra_allcountsbatch_bypartition)
 print ('ranks table in cassandra transfered')
-#64.6 seconds
 
-# <codecell>
-
-# importing modules from cqlengine to write to cassandra table
-def AddToCassandra_allcountsbatch_bypartition(d_iter):
-    #from cassandra.cluster import Cluster
-    from cqlengine import columns
-    from cqlengine.models import Model
-    from cqlengine import connection
-    from cqlengine.management import sync_table
-    #CASSANDRA_KEYSPACE = "wikipedia_jan_2015"
-    CASSANDRA_KEYSPACE = "test"
-    class url_links_5(Model):
-        url = columns.Text(primary_key=True)
-        links = columns.List(columns.Text)#this will be stored as a double
-        def __repr__(self):
-            return '%s %s' % (self.url, self.links)#http://docs.datastax.com/en/cql/3.1/cql/cql_using/use_list_t.html
-        # connecting to cassandra key space "watch_events" and syncing the desired table
-    #connection.setup(['52.88.228.98','52.11.49.170'], CASSANDRA_KEYSPACE)
-    connection.setup(['52.89.66.139','52.89.34.7','52.89.116.45','52.89.78.4', '52.89.27.115','52.89.133.147','52.89.1.48'], CASSANDRA_KEYSPACE)
-    #cluster = Cluster(['52.88.228.98','52.11.49.170','52.88.193.89','52.88.5.151'])
-    #session = cluster.connect(CASSANDRA_KEYSPACE)
-    sync_table(url_links_5)
-    for d in d_iter:
-        url_links_5.create(**d)
-        
-# Create table if it does not exist. Need to do this before submitting to Spark to avoid collisions
-AddToCassandra_allcountsbatch_bypartition([])
-RDD_links_JSON.foreachPartition(AddToCassandra_allcountsbatch_bypartition)
-
-print('links table in cassandra transfered')
-#seconds = 75
-
-# <codecell>
-
-
-# <codecell>
-
-
+#46 seconds
 
