@@ -254,8 +254,8 @@ def AddToCassandra_allcountsbatch_bypartition(d_iter): #filter_missing_values=Tr
     connection.setup(['52.89.66.139','52.89.34.7','52.89.116.45','52.89.78.4', '52.89.27.115','52.89.133.147','52.89.1.48'], CASSANDRA_KEYSPACE)
     class url_ranks_links_20(Model):
         #primary key is url which is dictated by the number of links
-        url = columns.Text()
-        ranks = columns.Float(primary_key=True)#this will be stored as a double # this is a primary key to sort on later
+        url = columns.Text(primary_key=True)
+        ranks = columns.Float()#this will be stored as a double # this is a primary key to sort on later
         links = columns.List(columns.Text)#this will be stored as a double
         def __repr__(self):
             return '%s %s' % (self.url, self.ranks)
