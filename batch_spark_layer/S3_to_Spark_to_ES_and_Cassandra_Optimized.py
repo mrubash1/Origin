@@ -61,6 +61,10 @@ RDD_links.take(1)
 
 # <codecell>
 
+RDD_plaintext.take(2)
+
+# <codecell>
+
 #This is an example implementation of PageRank. For more conventional use,
 #Please refer to PageRank implementation provided by graphx
 #https://github.com/apache/spark/blob/master/examples/src/main/python/pagerank.py
@@ -205,7 +209,7 @@ print ('done')
 
 #Create JSON files for import into Cassandra
 RDD_url_ranks_links=ranks.leftOuterJoin(RDD_links)
-RDD_url_ranks_links.take(20)
+RDD_url_ranks_links.take(2)
 
 # <codecell>
 
@@ -222,7 +226,7 @@ RDD_JSON_FILTERED = RDD_url_ranks_links_partioned.filter(lambda x: x[1][0] != No
 #create Json form of RDD, and add an additional url_ID column for future sorting
 #RDD_JSON=RDD_JSON_FILTERED.map(lambda x: {"url":x[0], "ranks":x[1][0], "links":x[1][1]}).persist(StorageLevel.MEMORY_AND_DISK_SER) 
 #where user_ID is the total amount of links used as an ad hoc partition key to increase speed, and reduce hot to warm spots
-RDD_JSON=RDD_JSON_FILTERED.map(lambda x: { "user_ID": len(x[1][1]), "ranks":x[1][0], "url":x[0],"links":x[1][1], }).persist(StorageLevel.MEMORY_AND_DISK_SER) 
+RDD_JSON=RDD_JSON_FILTERED.map(lambda x: {"url":x[0],"ranks":x[1][0], "links":x[1][1], }).persist(StorageLevel.MEMORY_AND_DISK_SER) 
 RDD_JSON.take(10)
 
 #3.5 seconds
@@ -248,23 +252,21 @@ def AddToCassandra_allcountsbatch_bypartition(d_iter): #filter_missing_values=Tr
     #CASSANDRA_KEYSPACE = "wikipedia_jan_2015"
     CASSANDRA_KEYSPACE = "test"
     connection.setup(['52.89.66.139','52.89.34.7','52.89.116.45','52.89.78.4', '52.89.27.115','52.89.133.147','52.89.1.48'], CASSANDRA_KEYSPACE)
-    class url_ranks_links_15(Model):
-        #primary key is user_ID which is dictated by the number of links
-        user_ID=columns.Float(primary_key=True)
-        ranks = columns.Float(primary_key=True)#this will be stored as a double # this is a primary key to sort on later
+    class url_ranks_links_20(Model):
+        #primary key is url which is dictated by the number of links
         url = columns.Text()
+        ranks = columns.Float(primary_key=True)#this will be stored as a double # this is a primary key to sort on later
         links = columns.List(columns.Text)#this will be stored as a double
-        
-        
         def __repr__(self):
             return '%s %s' % (self.url, self.ranks)
-    sync_table(url_ranks_links_15)
+    
+    sync_table(url_ranks_links_20)
     for d in d_iter:
-        url_ranks_links_15.create(**d)
+        url_ranks_links_20.create(**d)
 
        
 # Create table if it does not exist. Need to do this before submitting to Spark to avoid collisions
-#AddToCassandra_allcountsbatch_bypartition([])
+AddToCassandra_allcountsbatch_bypartition([])
 RDD_JSON.foreachPartition(AddToCassandra_allcountsbatch_bypartition)
 print ('ranks table in cassandra transfered')
 
