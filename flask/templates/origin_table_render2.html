@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block origin_table_render2 %}
+
+<div class="container">
+
+      <div class="starter-template">
+        <div class="row" style="height:100vh;">
+                <div class="col-md-10 col-md-offset-1", style="padding-top:20vh">
+                    <table class="table">
+                      <thead class="thead-inverse">
+                        <tr>
+                          <th>url</th>
+                          <th>rank</th>
+                          <th>total_links</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for val in output %}
+                        <tr>
+                          <td>{{val.url}}</td>
+                          <td>{{val.rank}}</td>
+                          <td>{{val.total_links}}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                </div>
+        </div>
+      </div>
+
+    </div>
+
+{% endblock %}
