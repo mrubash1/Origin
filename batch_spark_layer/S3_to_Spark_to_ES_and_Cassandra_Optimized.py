@@ -252,7 +252,7 @@ def AddToCassandra_allcountsbatch_bypartition(d_iter): #filter_missing_values=Tr
     #CASSANDRA_KEYSPACE = "wikipedia_jan_2015"
     CASSANDRA_KEYSPACE = "test"
     connection.setup(['52.89.66.139','52.89.34.7','52.89.116.45','52.89.78.4', '52.89.27.115','52.89.133.147','52.89.1.48'], CASSANDRA_KEYSPACE)
-    class url_ranks_links_20(Model):
+    class url_ranks_links_21(Model):
         #primary key is url which is dictated by the number of links
         url = columns.Text(primary_key=True)
         ranks = columns.Float()#this will be stored as a double # this is a primary key to sort on later
@@ -260,9 +260,9 @@ def AddToCassandra_allcountsbatch_bypartition(d_iter): #filter_missing_values=Tr
         def __repr__(self):
             return '%s %s' % (self.url, self.ranks)
     
-    sync_table(url_ranks_links_20)
+    sync_table(url_ranks_links_21)
     for d in d_iter:
-        url_ranks_links_20.create(**d)
+        url_ranks_links_21.create(**d)
 
        
 # Create table if it does not exist. Need to do this before submitting to Spark to avoid collisions
