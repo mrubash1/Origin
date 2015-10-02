@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block origin_table_render2 %}
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script>
+window.onload = function() {
+var width = 1200,
+    height = 800;
+
+var color = d3.scale.category20();
+
+var force = d3.layout.force()
+    .charge(-40)
+    .linkDistance(7)
+    .size([width, height]);
+
+var svg = d3.select("#graph_div").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("../static/data/graphing.json", function(error, graph) {
+  if (error) throw error;
+
+  force
+      .nodes(graph.nodes)
+      .links(graph.links)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(graph.links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+  var node = svg.selectAll(".node")
+      .data(graph.nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 5)
+      .style("fill", function(d) { return color(d.group); })
+      .call(force.drag);
+
+  node.append("title")
+      .text(function(d) { return d.name; });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+  });
+});
+}
+</script>
+<div class="container">
+
+      <div class="starter-template">
+        <div class="row" style="height:100vh;">
+          <div class="col-md-10 col-md-offset-1 text-center" style="margin-top:10vh;">
+                        <h3> {{query_output}}</h3>
+          </div>
+
+          <div id='graph_div'>
+
+
+          </div>
+
+                <div class="col-md-10 col-md-offset-1", style="padding-top:5vh">
+                    <table class="table">
+                      <thead class="thead-inverse">
+                        <tr>
+                          <th>url</th>
+                          <th>rank</th>
+                          <th>total_links</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for val in output %}
+                        <tr>
+                          <td>{{val.url}}</td>
+                          <td>{{val.rank}}</td>
+                          <td>{{val.total_links}}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                </div>
+        </div>
+      </div>
+
+    </div>
+
+
+
+{% endblock %}
