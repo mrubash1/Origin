@@ -80,15 +80,15 @@ def graph_post():
       #Find total amount by query that is a false positive, 100%, wiki search
       total_Hits = (es.search(index_name, q='wiki'))['hits']['total'] #modify later to direct call to get total amount
       #Output
-      print (("%d contain " % res['hits']['total']) +'"' + query_phrase +'", out of ' + str(size_total))
-
+      query_html_printout = (("%d contain " % res['hits']['total']) +'"' + query_phrase +'", out of ' + str(size_total))
+      print query_html_printout
       #return the res elastic search results for future processing
-      return res
+      return res, query_html_printout
   
 
 
   #return the elastic search item
-  res=elasticsearch(es,query_phrase,elastic_search_index_name)
+  res, query_html_printout=elasticsearch(es,query_phrase,elastic_search_index_name)
   
 
   #print res
@@ -113,7 +113,7 @@ def graph_post():
 
   #Establish the URL by order according to the query, using the query_url_list
   def extract_queried_urls_ranks_links(query_url_list, session):
-      #print 'Inside loop: extract_queried_urls_ranks_links'
+      print 'Inside loop: extract_queried_urls_ranks_links'
       #Arrays to fill in
       url_total=[]
       ranks_total=[]
@@ -138,7 +138,9 @@ def graph_post():
                       ranks_total.append(row[2])
                       
                       #Create JSON for html insertion, by constructing dictionary for assembly in array 
-                      data_json_sample=({"url": row[0], "rank": row[2], "total_links" : len(row[1]), "example_links" : (row[1][0]+row[1][1]+row[1][2])})
+                      #data_json_sample=({"url": row[0], "rank": row[2], "total_links" : len(row[1]), "example_links" : (row[1][0]+row[1][1]+row[1][2])})
+                      data_json_sample=({"url": row[0], "rank": str(row[2])[:100], "total_links" : len(row[1]), "example_links" : (row[1][0]+row[1][1]+row[1][2])})
+
                       #Fill the array with dicts
                       data_json.append(data_json_sample)
                       #print
@@ -168,13 +170,22 @@ def graph_post():
   json_for_html_table=sorted(data_json, key=itemgetter('rank'), reverse=True)
 
   print json_for_html_table
+  print 'About to render template...'
   #return render_template("origin_table_render.html", output=json_for_html_table)
   #return render_template("test1.html", output=json_for_html_table)
   #return render_template("origin_table_render.html", output=json_for_html_table)
   #return render_template("origin_table_render.html", output=json_for_html_table)
-  return render_template("origin_table_render2.html", output=json_for_html_table)
+  return render_template("origin_table_render2.html", query_output= query_html_printout, output=json_for_html_table) #make 100 the max nodes
 
 #print links_listedPerURL[1]
+  # link to the slides
+
+
+@app.route("/slides")
+def slides():
+  return render_template("slides.html")
+
+
 
 if __name__ == "__main__":
   print 'running'
