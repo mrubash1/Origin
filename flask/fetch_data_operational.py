@@ -4,10 +4,13 @@
 
 import json, operator, re
 from cassandra.cluster import Cluster
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, make_response
 from cassandra.query import SimpleStatement
 from sets import Set
 from operator import itemgetter
+
+from functools import wraps, update_wrapper
+from datetime import datetime
 
 #set up connection to elasticsearch
 from elasticsearch import Elasticsearch
@@ -41,8 +44,22 @@ def hello():
 def graph():
   return render_template("graph_query.html")
 
+#to allow for the website to reload, ala no cache
+def nocache(view):
+    @wraps(view)
+    def no_cache(*args, **kwargs):
+        response = make_response(view(*args, **kwargs))
+        response.headers['Last-Modified'] = datetime.now()
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
+        
+    return update_wrapper(no_cache, view)
+
 # get username and return graph
 @app.route("/origin/graph", methods=['POST'])
+@nocache
 def graph_post():
   search_term = request.form["Visualization_Density"] # get username entered
   print search_term
@@ -139,7 +156,10 @@ def graph_post():
                       
                       #Create JSON for html insertion, by constructing dictionary for assembly in array 
                       #data_json_sample=({"url": row[0], "rank": row[2], "total_links" : len(row[1]), "example_links" : (row[1][0]+row[1][1]+row[1][2])})
-                      data_json_sample=({"url": row[0], "rank": str(row[2])[:100], "total_links" : len(row[1]), "example_links" : (row[1][0]+row[1][1]+row[1][2])})
+                      #data_json_sample=({"url": row[0], "rank": str(row[2])[:100], "total_links" : len(row[1]), "example_links" : (row[1][0]+row[1][1]+row[1][2])})
+                      data_json_sample=({"url": row[0], "rank": row[2], "total_links" : len(row[1]), "example_links" : row[1] })
+                      #MAKE SURE TO CONVERT ABOVE FOR THE RANK TO STRING LATER
+
 
                       #Fill the array with dicts
                       data_json.append(data_json_sample)
@@ -157,25 +177,125 @@ def graph_post():
 
   #Run extract and keep arrays
   url_total, ranks_total, links_total, links_listedPerURL,data_json=extract_queried_urls_ranks_links(query_url_list,session)
-  #print ('json extraction complete')
+  #sort for highest ranks
+  
+  #print json_for_html_table
 
-  #query_phrase described above in searching elasticsearch
-  #jsonresponse={'query_name': query_phrase, 'nodes': [x for x in data_json]}
-  #json_for_html_table=json.dumps(jsonresponse)
-  #json_for_html_table=json.dumps(jsonresponse)
-  #json_for_html_table2=json.dumps(data_json)
-  #json_for_html_table=jsonify(jsonresponse)
-  #print 'json_for_html_tables: ' (json_for_html_table)
+  def prepare_json_for_D3(data_json):
+      print ('prepare_json_for_D3...')
+      json_for_html_table=sorted(data_json, key=itemgetter('rank'), reverse=True)
+      #Grab a maximum amounts of nodes 
+      central_node_limit=100
+      json_for_html_table_top= json_for_html_table[:central_node_limit]
+      #print len(json_for_html_table_top)
+       
+      #create a global counter for creating the d3 objects
+      node_counter=0
+      central_node_counter=0
+      nodes=[]
+      links=[]
 
-  json_for_html_table=sorted(data_json, key=itemgetter('rank'), reverse=True)
+      #Edge weight currently set to 1, but can be increased in the future
+      edge_weight=1
 
-  print json_for_html_table
+      #Create the node portion of the graph first so they can be   
+      global_counter=0
+      central_nodes=[]
+      for json_dict in json_for_html_table_top:
+          if global_counter < central_node_limit:
+            #print ('in the node creation loop')
+            #create central_node list to later attach edges
+            central_node_locator = json_dict['url']
+            central_nodes.append(central_node_locator)
+            #get a dict of the node for d3
+            node=({"name": json_dict['url'], "group":0})
+            nodes.append(node)
+            #log which node these links will be connected to
+            central_node=node_counter
+            #then increase node counter to make sure that the links don't override
+            node_counter+=1
+            #iterate through links file
+            global_counter+=1
+            #print global_counter
+          else:
+            break
+
+      #print 'Starting D3 edge creation loop'
+      max_links_to_center_node=10
+      #reset global counter
+      global_counter=0
+      #to create D3 graph, loop through each of the dicts in json_for_html_table
+      for json_dict in json_for_html_table_top:
+          #reset the global counter to twice what it was before, as we already went through once
+          if global_counter < central_node_limit:
+            #print "MADE IT TO THE BIG LOOP:"
+            #log which node these links will be connected to
+            central_node=global_counter
+            #iterate through links file, but have a counter to set it to a limit
+            counter=0
+            #remove duplicate links to allow for the graph to assemble correctly
+            #LATER COUNT THE DUPLICATES IN THE LIST TO CHANGE THE WEIGHTING OF THE GRAPH
+            for link in list(set(json_dict['example_links'])):
+                #print "MADE IT TO THE SMALL LOOP:"
+                #Create a statement to pick 9 nodes randomly before checking for connecting nodes
+                if link in central_nodes:
+                    #get the position of link in the central_nodes 
+                    central_node_with_edge=central_nodes.index(link)
+                    #Create the dict to incorporate
+                    #create link list where the source is the current node, target is central node
+                    #Value=edge weight, currently set to zero
+                    link=({"source": global_counter, "target" : central_node_with_edge, "value":edge_weight})
+                    print link
+                    ##HAVE TO MAKE THIS LINK GO TO A CENTRAL NODE
+                    nodes.append(node)
+                    node_counter+=1
+                    links.append(link)
+                    counter+=1
+            if counter < max_links_to_center_node: # run to make more neighboring nodes
+              for link in list(set(json_dict['example_links'])):
+                if counter < max_links_to_center_node:
+                    #Create color coded network around nodes
+                    group_color=global_counter%20
+                    if group_color == 0: #avoid 0 as that is for the nodes only
+                      group_color=19
+                    #record the node and link
+                    node=({"name": link, "group":group_color})
+                    #create link list where the source is the current node, target is central node
+                    #Value=edge weight, currently set to zero
+                    link=({"source": node_counter, "target" : global_counter, "value":edge_weight}) #central node = global counter, and should correspond to central node
+                    nodes.append(node)
+                    node_counter+=1
+                    links.append(link)
+                    counter+=1
+                    #print 'counter', counter
+                    #print 'This is the central node, should be static then increasing: ', central_node
+                
+                else:
+                  pass
+            global_counter+=1
+            #Create D3 graphing object that we will return to the render_template
+            D3_graphing_json_sample=({"nodes": nodes, "links": links})
+            print 'completed preperation of D3_graphing_json_sample'
+      return D3_graphing_json_sample
+
+  #run functions for getting D3 ready information
+  D3_graphing_json_sample= prepare_json_for_D3(data_json)
+  #print D3_graphing_json_sample
+
+  #save the file to static/data folder, and convert it to a json file first
+  file = open('static/data/graphing.json', "w")
+  file.write(json.dumps(D3_graphing_json_sample, indent=2))
+  file.close()
+
   print 'About to render template...'
-  #return render_template("origin_table_render.html", output=json_for_html_table)
-  #return render_template("test1.html", output=json_for_html_table)
-  #return render_template("origin_table_render.html", output=json_for_html_table)
-  #return render_template("origin_table_render.html", output=json_for_html_table)
-  return render_template("origin_table_render2.html", query_output= query_html_printout, output=json_for_html_table) #make 100 the max nodes
+  #return render_template("origin_table_render2.html", query_output= query_html_printout, output=json_for_html_table) #make 100 the max nodes
+  #return render_template("D3_graph.html", graph_output = D3_graphing_json_sample)
+  resp=render_template("D3_graph.html")
+  #Disable caching on browser so the graph can reload
+  #resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" # HTTP 1.1.
+  #resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
+  #resp.headers["Expires"] = "0"
+  return render_template("D3_graph.html")
 
 #print links_listedPerURL[1]
   # link to the slides
