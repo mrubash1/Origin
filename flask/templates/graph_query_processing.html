@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block graph_query %}
+        <div class="row" style="height:100vh;">
+                <div class="col-md-8 col-md-offset-2 text-center" style="margin-top:25vh;">
+                        <h3>Search, visualize, and analyze  network interactions in English Wikipedia. </h3>
+                </div>
+                <div class="col-md-4 col-md-offset-4 text-center">
+                        <h2 style="font-weight:300;">Enter Search Word or Phrase</h2>
+                        <br />
+                        <form class="form-inline" action="/origin/graph" method="POST">
+                                <div class="form-group text-center">
+                                        <div class="input-group">
+                                                <input style="border-radius:4px;" type="text" class="form-control" name="Visualization_Density" placeholder="Search Origin">
+                                        </div>
+                                        <select class="form-control" name="year">
+                                                <option>Max (1000 nodes)</option>
+                                                <option>High (500 nodes)</option>
+                                                <option>Medium (200 nodes)</option>
+                                                <option>Low (100 nodes)</option>
+                                                <option>Very Low (50 nodes)</option>
+                                        </select>
+                                        <br /> <br />
+                                        <button type="submit" value="Send" name="username-container" class="btn btn-default id-submit">Submit</button>
+                                </div>
+                        </form>
+                </div>
+                <div class="col-md-4 col-md-offset-4 text-center">
+                	<h1 style="font-weight:100;">Processing...</h3>	
+			<h3 style="font-weight:100;">{{ Output }}</h3>
+                </div>
+        </div>
+{% endblock %}

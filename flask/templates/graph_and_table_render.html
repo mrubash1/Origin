@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block origin_table_render2 %}
 
+<script language="javascript">
+var graph = {{json_output | safe}};
+console.log(graph);
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 <script>
@@ -21,8 +25,7 @@ var tooltip = d3.select("body")
 var svg = d3.select("#graph_div").append("svg")
     .attr("width", width)
     .attr("height", height);
-d3.json("../static/data/graphing.json", function(error, graph) {
-  if (error) throw error;
+
   force
       .nodes(graph.nodes)
       .links(graph.links)
@@ -36,7 +39,7 @@ d3.json("../static/data/graphing.json", function(error, graph) {
       .data(graph.nodes)
     .enter().append("circle")
       .attr("class", "node")
-      .attr("r", 6)
+      .attr("r", 5)
       .style("fill", function(d) { return color(d.group); })
       .call(force.drag);
   node.append("title")
@@ -50,9 +53,10 @@ d3.json("../static/data/graphing.json", function(error, graph) {
     node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; });
   });
-});
 }
 </script>
+
+
 <div class="container">
 
       <div class="starter-template">
@@ -61,10 +65,8 @@ d3.json("../static/data/graphing.json", function(error, graph) {
                         <h3> {{query_output}}</h3>
           </div>
 
-          <div id='graph_div'>
-
-
-          </div>
+            <div id='graph_div'>
+            </div>
 
                 <div class="col-md-10 col-md-offset-1", style="padding-top:5vh">
                     <table class="table">
@@ -90,6 +92,9 @@ d3.json("../static/data/graphing.json", function(error, graph) {
       </div>
 
     </div>
+
+
+
 
 
 

@@ -43,6 +43,7 @@ app = Flask(__name__)
 
 print 'VERIFICATION: SCRIPT RUNNING'
 # homepage
+@app.route("/")
 @app.route("/origin")
 @app.route("/origin/index")
 def hello():
@@ -222,7 +223,8 @@ def graph_post():
             central_node_locator = json_dict['url']
             central_nodes.append(central_node_locator)
             #get a dict of the node for d3
-            node=({"name": json_dict['url'], "group":0})
+            #node=({"name": json_dict['url'], "group":0})
+            node=({"name": json_dict['url'], "group":0, "rank":json_dict['rank'],"total_links":json_dict['total_links']})
             nodes.append(node)
             #log which node these links will be connected to
             central_node=node_counter
@@ -273,7 +275,8 @@ def graph_post():
                     if group_color == 0: #avoid 0 as that is for the nodes only
                       group_color=19
                     #record the node and link
-                    node=({"name": link, "group":group_color})
+                    #node=({"name": link, "group":group_color})
+                    node=({"name": json_dict['url'], "group":group_color, "rank":'',"total_links":''})
                     #create link list where the source is the current node, target is central node
                     #Value=edge weight, currently set to zero
                     link=({"source": node_counter, "target" : global_counter, "value":edge_weight}) #central node = global counter, and should correspond to central node
@@ -297,12 +300,22 @@ def graph_post():
   #print D3_graphing_json_sample
 
   #save the file to static/data folder, and convert it to a json file first
-  file = open('static/data/graphing.json', "w")
+  filename= elastic_search_index_name+'_'+CASSANDRA_KEYSPACE+'_'+cassandra_table + '_'+'max_nodes' + '_'+query_phrase
+  file = open('static/data/graphing_'+filename+'.json', "w")
   file.write(json.dumps(D3_graphing_json_sample, indent=2))
   file.close()
+  #save the rank data for future analysis
+  file = open('static/data/analysis_'+filename+'.json', "w")
+  file.write(json.dumps(json_for_html_table, indent=2))
+  file.close()
+  
+
+  hard_coded_json={"nodes":[{"name":"Myriel","group":1},{"name":"Napoleon","group":1}],"links":[{"source":1,"target":0,"value":1}]}
 
   print 'About to render template...'
-  return render_template("graph_and_table_render.html", query_output= query_html_printout, output=json_for_html_table[:100]) #make 100 the max nodes
+  return render_template("graph_and_table_render.html", query_output= query_html_printout, json_output= json.dumps(D3_graphing_json_sample), output=json_for_html_table[:100]) #make 100 the max nodes
+  #return render_template("graph_and_table_render.html", query_output= query_html_printout, json_output= json.dumps(hard_coded_json), output=json_for_html_table[:100]) #make 100 the max nodes
+
   #return render_template("D3_graph.html", graph_output = D3_graphing_json_sample)
   #return render_template("D3_graph.html")
 
