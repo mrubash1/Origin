@@ -1,12 +1,7 @@
-#https://github.com/ikreymer/webarchive-indexing/blob/master/requirements.txt
-#Requirements for launching ikreymer/webarchive-indexing
-
-mrjob
-boto
-pywb
+wb
 simplejson
-https://github.com/commoncrawl/gzipstream/archive/master.zip
 s3cmd
-leiningen
-#-e git+https://github.com/ikreymer/pywb.git@0.9.0b#egg=pywb
--e git+https://github.com/matteobertozzi/Hadoop.git#egg=hadoop&subdirectory=python-hadoop
+elasticsearch
+cqlengine
+warc
+Flask
