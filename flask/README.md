@@ -8,7 +8,7 @@
 5. [Front End] (README.md#5-front-end)
 6. [Presentation] (README.md#6-presentation)
 
-![Example graph query] (flask/static/img/origin.png)
+![Origin Logo] (flask/static/img/origin.png)
 
 ## 1. Introduction
 [Origin](http://mrubash1.com/origin) is an analysis platform for querying and analyzing large networks on the world wide web. It is a big data pipeline that enables data scientists, network analysts or any web user to discover new communities. Origin uses [Commoncrawl] (http://commoncrawl.org/) as a primary data source to serve the application, [CCBlast] (https://github.com/mrubash1/CCblast) and [cdx-index-client] (https://github.com/ikreymer/cdx-index-client) for data production, Spark for batch processing of network interactions, a hybrid Cassandra/ElasticSearch database and Flask/D3 as the web serving layer.
