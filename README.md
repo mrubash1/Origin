@@ -43,7 +43,7 @@ The Common Crawl Foundation corpus contains petabytes of data trawled from the w
 
   * In order to download, parse and clean the commoncrawl data, the producing cluster of four m4 x xlarge run [CCBlast] (https://github.com/mrubash1/CCblast). CCBlast takes the S3 file location information from the [cdx-index-clinet] (https://github.com/ikreymer/pywb/wiki/CDX-Server-API#api-reference), downloads the relevant WAT and WET files to the local machines, parses the data to remove unnecessary metadata, cleans the data for problematic strings (i.e. 'true' instead of 'True'), then uploads the information to a personal S3 bucket. This personal S3 bucket and associated data will serve as the 'source of truth' for the Origin Platform.
 
-  * [WARC file type](/flask/static/img/warc.png) 
+  ![WARC file type](/flask/static/img/warc.png) 
 
  * ### Batch Processing
   *Data from S3 is pulled into Spark using [pyspark(https://spark.apache.org/docs/0.9.0/python-programming-guide.html). (INSERT) and [Spark SQL](https://spark.apache.org/docs/1.3.1/api/python/pyspark.sql.html). The data is then filtered into the following schema in dataframe format then transformed into memory cached RDDs for the [PageRank](https://en.wikipedia.org/wiki/PageRank) calculation. Below is an example of the Spark schema:
