@@ -6,7 +6,9 @@
 3. [Data Pipeline] (README.md#3-data-pipeline)
 4. [Database] (README.md#4-database)
 5. [Front End] (README.md#5-front-end)
-6. [Presentation] (README.md#6-presentation)
+6. [Requirements](README.md#5-requirements)
+7. [Presentation] (README.md#6-presentation)
+
 
 ![Origin Logo] (flask/static/img/origin.png)
 
@@ -68,9 +70,17 @@ The Common Crawl Foundation corpus contains petabytes of data trawled from the w
 
   *The D3 graph visualization is based upon [force directed graphs] (http://bl.ocks.org/mbostock/4062045) developed by Mike Bostock. In this graph, nodes experience a repulsive force from another, while simultaneously tehtered by an elastic linker (the edge) to nodes which they are connected via hyperlink. The result of the attractive and repulsive forces is to cluster communities of nodes that share many edges, and seperate nodes that share few edges and have many secondary nodes.
 
+## 6. Requirements
+  *It is recommonded that you run the Origin platform on an AWS distributed system. In order to install requirements: 
+    *sudo apt-get install git
+    *sudo apt-get install python-pip python-dev build-essential
+    *sudo apt-get install python-pip
+    *sudo pip install -r requirements.txt
+    *sudo pip install -e git+https://github.com/commoncrawl/gzipstream.git#egg=gzipstream
+  #Then run:
+    *git clone https://github.com/mrubash1/origin
 
-
-## 6. Presentation
+## 7. Presentation
 Presentation for [Origin] (http://mrubash1.com/origin) can be found [here](http://mrubash1.com/origin/slides)
 
 
