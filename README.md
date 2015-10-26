@@ -70,6 +70,8 @@ The Common Crawl Foundation corpus contains petabytes of data trawled from the w
 
   *The D3 graph visualization is based upon [force directed graphs] (http://bl.ocks.org/mbostock/4062045) developed by Mike Bostock. In this graph, nodes experience a repulsive force from another, while simultaneously tehtered by an elastic linker (the edge) to nodes which they are connected via hyperlink. The result of the attractive and repulsive forces is to cluster communities of nodes that share many edges, and seperate nodes that share few edges and have many secondary nodes.
 
+  *Supervisor is used to keep the app running at all times, and enables autonomous rebooting if the flask app crashes 
+
 ## 6. Requirements
   * ### It is recommonded that you run the Origin platform on an AWS distributed system. To install requirements: 
    *sudo apt-get install git
