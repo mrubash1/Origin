@@ -1,12 +1,7 @@
-#origin_table_render Template
-#mrubash1
-#150925
-
 {% extends "base.html" %}
-{% block email %}
+{% block origin_table_render %}
 
-<div class="container">
-
+   <div class="container">
       <div class="starter-template">
         <div class="row" style="height:100vh;">
                 <div class="col-md-10 col-md-offset-1">
@@ -14,18 +9,18 @@
                       <thead>
                         <tr>
                           <th>url</th>
-                          <th>rank</th>
-                          <th>total link</th>
                           <th>example_links</th>
+                          <th>total_links</th>
+                          <th>rank</th>
                         </tr>
                       </thead>
                       <tbody>
                         {% for val in output %}
                         <tr>
                           <td>{{val.url}}</td>
-                          <td>{{val.rank}}</td>
-                          <td>{{val.total_links}}</td>
                           <td>{{val.example_links}}</td>
+                          <td>{{val.total_links}}</td>
+                          <td>{{val.rank}}</td>
                         </tr>
                         {% endfor %}
                       </tbody>
